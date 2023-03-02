@@ -413,7 +413,7 @@ def test_sparsity(model, column=True, channel=True, filter=True):
 
 def check_model(criterion):
     print("checking model.....")
-    original_model_name = "./model_reweighted/rew_epoch_50_1.pt"
+    original_model_name = "./model_reweighted/rew_epoch_50.pt"
     model.load_state_dict(torch.load(original_model_name))
     print(model)
     print("\n------------------------------\n")
@@ -430,7 +430,7 @@ def check_model(criterion):
     #         print(W.data)
 
 def reweighted_training(criterion, optimizer, scheduler):
-    original_model_name = "./model/cifar10_resnet18_avg_acc_65.815_sgd.pt"
+    original_model_name = "./model/cifar10_resnet18_avg_acc_65.105_sgd_test_1_round.pt"
     print("\n>_ Loading baseline/progressive model..... {}\n".format(original_model_name))
     model.load_state_dict(torch.load(original_model_name))  # need basline model
 
@@ -467,7 +467,6 @@ def reweighted_training(criterion, optimizer, scheduler):
             rew_layers.append(1 / (torch.norm(conv_layer.data, dim=[2, 3]) + eps))
         elif args.sparsity_type == "filter":
             rew_layers.append(1 / (torch.norm(torch.norm(conv_layer.data, dim=1), dim=[1, 2]) + eps))
-
     all_nat_acc = [0.000]
     all_adv_acc = [0.000]
     for epoch in range(1, args.epochs + 1):
@@ -508,10 +507,10 @@ def reweighted_training(criterion, optimizer, scheduler):
 
 def masked_retrain(criterion, optimizer, scheduler):
     print("\n>_ Loading file...")
-    model.load_state_dict(torch.load("model_reweighted/rew_epoch_50_1.pt"))
+    model.load_state_dict(torch.load("model_reweighted/rew_epoch_50.pt"))
     model.cuda()
 
-    model_record_name = "./model/cifar10_resnet18_avg_acc_65.815_sgd.pt"
+    model_record_name = "./model/cifar10_resnet18_avg_acc_65.105_sgd_test_1_round.pt"
 
     model_record.load_state_dict(torch.load(model_record_name))
 
@@ -585,13 +584,13 @@ def masked_retrain(criterion, optimizer, scheduler):
                 os.remove("./model_retrained2/cifar10_{}{}_avg_acc_{:.3f}_{}.pt".format(args.arch, args.depth, max(all_nat_acc), args.optmzr))
         all_nat_acc.append(nat_acc)
 
-        if adv_acc > max(all_adv_acc):
-            print("\n>_ Got better accuracy, saving model with accuracy {:.3f}% now...\n".format(adv_acc))
-            torch.save(model.state_dict(), "./model_retrained2/cifar10_{}{}_adv_acc_{:.3f}_{}.pt".format(args.arch, args.depth, adv_acc, args.optmzr))
-            print("\n>_ Deleting previous model file with accuracy {:.3f}% now...\n".format(max(all_adv_acc)))
-            if len(all_adv_acc) > 1:
-                os.remove("./model_retrained2/cifar10_{}{}_adv_acc_{:.3f}_{}.pt".format(args.arch, args.depth, max(all_adv_acc), args.optmzr))
-        all_adv_acc.append(adv_acc)
+        # if adv_acc > max(all_adv_acc):
+        #     print("\n>_ Got better accuracy, saving model with accuracy {:.3f}% now...\n".format(adv_acc))
+        #     torch.save(model.state_dict(), "./model_retrained2/cifar10_{}{}_adv_acc_{:.3f}_{}.pt".format(args.arch, args.depth, adv_acc, args.optmzr))
+        #     print("\n>_ Deleting previous model file with accuracy {:.3f}% now...\n".format(max(all_adv_acc)))
+        #     if len(all_adv_acc) > 1:
+        #         os.remove("./model_retrained2/cifar10_{}{}_adv_acc_{:.3f}_{}.pt".format(args.arch, args.depth, max(all_adv_acc), args.optmzr))
+        # all_adv_acc.append(adv_acc)
 
         # if prec1 > max(best_prec1):
         #     print("\n>_ Got better accuracy, saving model with accuracy {:.3f}% now...\n".format(prec1))
@@ -743,6 +742,8 @@ def train(train_loader, criterion, optimizer, scheduler, epoch, args, layers, re
                     l1_loss = l1_loss + 1e-5 * torch.sum(rew * torch.norm(conv_layer, dim=[2, 3]))
                 elif args.sparsity_type == "filter":
                     l1_loss = l1_loss + 8e-4 * torch.sum(rew * torch.norm(torch.norm(conv_layer, dim=1), dim=[1, 2]))
+
+
             ce_loss = l1_loss + ce_loss
             adv_loss = l1_loss + adv_loss
 
@@ -759,11 +760,13 @@ def train(train_loader, criterion, optimizer, scheduler, epoch, args, layers, re
         optimizer.zero_grad()
         adv_loss.backward()
 
+
         if args.combine_progressive:
             with torch.no_grad():
                 for name, W in (model.named_parameters()):
                     if name in masks:
                         W.grad *= masks[name]
+
         if args.masked_retrain and not args.masked_grow:
             with torch.no_grad():
                 for name, W in (model.named_parameters()):
@@ -783,6 +786,7 @@ def train(train_loader, criterion, optimizer, scheduler, epoch, args, layers, re
                         W.grad *= (masks[name] * reverse_masks[name])
 
         optimizer.step()
+
 
         if args.masked_grow and args.masked_retrain:
             with torch.no_grad():

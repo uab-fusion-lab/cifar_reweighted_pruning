@@ -10,7 +10,7 @@ python -u adv_main.py --arch resnet \
 					   --optmzr sgd \
 					   --lr 0.001 \
 					   --lr-scheduler default \
-					   --combine-progressive \
+					   --combine-progressive\
 					   --warmup-epochs 0 \
 					   --alpha 0.0 \
 					   --smooth-eps 0.1 &&
