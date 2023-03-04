@@ -6,10 +6,10 @@ python -u adv_main.py --arch resnet \
 					   --masked-retrain \
 					   --no-tricks \
 					   --sparsity-type filter \
-					   --epoch 200 \
+					   --epoch 300 \
 					   --optmzr sgd \
 					   --lr 0.1 \
 					   --lr-scheduler default \
-					   --config-file config_resnet18v3\
+					   --config-file config_resnet18v4\
 					   --warmup-epochs 0  &&
 echo "Congratus! Finished retraining!"
