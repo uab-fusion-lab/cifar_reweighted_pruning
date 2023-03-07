@@ -70,6 +70,8 @@ parser.add_argument('--verbose', action='store_true', default=True,
                     help='whether to report rew convergence condition')
 parser.add_argument('--rew', action='store_true', default=False,
                     help="for reweighted l1 training")
+parser.add_argument('--adv', action='store_true', default=False,
+                    help="for adv training")
 parser.add_argument('--check-model', action='store_true', default=False,
                     help="for model check")
 parser.add_argument('--masked-grow', action='store_true', default=False,
@@ -413,7 +415,7 @@ def test_sparsity(model, column=True, channel=True, filter=True):
 
 def check_model(criterion):
     print("checking model.....")
-    original_model_name = "./model_reweighted/cifar10_resnet18_avg_acc_65.675_sgd.pt"
+    original_model_name = "./model_retrained2/cifar10_resnet18_avg_acc_55.375_sgd.pt"
     model.load_state_dict(torch.load(original_model_name))
     print(model)
     print("\n------------------------------\n")
@@ -430,7 +432,7 @@ def check_model(criterion):
     #         print(W.data)
 
 def reweighted_training(criterion, optimizer, scheduler):
-    original_model_name = "./model_retrained2/cifar10_resnet18_avg_acc_60.875_sgd_test_3.pt"
+    original_model_name = "./model/cifar10_resnet18_avg_acc_65.815_sgd.pt"
     print("\n>_ Loading baseline/progressive model..... {}\n".format(original_model_name))
     model.load_state_dict(torch.load(original_model_name))  # need basline model
 
@@ -507,10 +509,10 @@ def reweighted_training(criterion, optimizer, scheduler):
 
 def masked_retrain(criterion, optimizer, scheduler):
     print("\n>_ Loading file...")
-    model.load_state_dict(torch.load("model_reweighted/rew_epoch_100.pt"))
+    model.load_state_dict(torch.load("model_reweighted/rew_epoch_50.pt"))
     model.cuda()
 
-    model_record_name = "./model_retrained2/cifar10_resnet18_avg_acc_60.875_sgd_test_3.pt"
+    model_record_name = "./model/cifar10_resnet18_avg_acc_65.815_sgd.pt"
 
     model_record.load_state_dict(torch.load(model_record_name))
 
@@ -758,7 +760,10 @@ def train(train_loader, criterion, optimizer, scheduler, epoch, args, layers, re
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
-        adv_loss.backward()
+        if args.adv:
+            adv_loss.backward()
+        else:
+            ce_loss.backward()
 
 
         if args.combine_progressive:

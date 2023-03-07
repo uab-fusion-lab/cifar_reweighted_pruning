@@ -6,7 +6,7 @@ python -u adv_main.py --arch resnet \
 					   --no-tricks \
 					   --rew \
 					   --sparsity-type filter \
-					   --epoch 100 \
+					   --epoch 50 \
 					   --optmzr sgd \
 					   --lr 0.001 \
 					   --lr-scheduler default \
