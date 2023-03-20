@@ -415,7 +415,7 @@ def test_sparsity(model, column=True, channel=True, filter=True):
 
 def check_model(criterion):
     print("checking model.....")
-    original_model_name = "./model_retrained2/cifar10_resnet18_avg_acc_55.375_sgd.pt"
+    original_model_name = "./model/cifar10_resnet18_avg_acc_60.365_sgd.pt"
     model.load_state_dict(torch.load(original_model_name))
     print(model)
     print("\n------------------------------\n")
@@ -425,14 +425,14 @@ def check_model(criterion):
     print("\n------------------------------\n")
     test(model, criterion, test_loader)
     #
-    # test_sparsity(model)
+    test_sparsity(model)
     #
     # for name, W in (model.named_parameters()):
     #     if (name == 'basic_model.layer1.0.conv1.weight'):
     #         print(W.data)
 
 def reweighted_training(criterion, optimizer, scheduler):
-    original_model_name = "./model/cifar10_resnet18_avg_acc_65.815_sgd.pt"
+    original_model_name = "./model/cifar10_resnet18_avg_acc_60.365_sgd.pt"
     print("\n>_ Loading baseline/progressive model..... {}\n".format(original_model_name))
     model.load_state_dict(torch.load(original_model_name))  # need basline model
 
@@ -509,10 +509,10 @@ def reweighted_training(criterion, optimizer, scheduler):
 
 def masked_retrain(criterion, optimizer, scheduler):
     print("\n>_ Loading file...")
-    model.load_state_dict(torch.load("model_reweighted/rew_epoch_50.pt"))
+    model.load_state_dict(torch.load("model_reweighted/rew_epoch_50_0.875.pt"))
     model.cuda()
 
-    model_record_name = "./model/cifar10_resnet18_avg_acc_65.815_sgd.pt"
+    model_record_name = "./model_retrained2/cifar10_resnet18_avg_acc_60.365_sgd.pt"
 
     model_record.load_state_dict(torch.load(model_record_name))
 
