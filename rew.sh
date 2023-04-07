@@ -1,7 +1,7 @@
 export CUDA_VISIBLE_DEVICES="0"
 
-python -u main.py --arch resnet \
-					   --depth 18 \
+python -u main.py --arch vgg \
+					   --depth 16 \
 					   --batch-size 256 \
 					   --no-tricks \
 					   --rew \
