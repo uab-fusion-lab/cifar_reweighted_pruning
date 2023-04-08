@@ -415,7 +415,7 @@ def test_sparsity(model, column=True, channel=True, filter=True):
 
 def check_model(criterion):
     print("checking model.....")
-    original_model_name = "./model/cifar10_vgg16_avg_acc_63.825_sgd.pt"
+    original_model_name = "./model_retrained2/cifar10_vgg16_avg_acc_60.515_sgd.pt"
     model.load_state_dict(torch.load(original_model_name))
     print(model)
     print("\n------------------------------\n")
@@ -432,7 +432,7 @@ def check_model(criterion):
     #         print(W.data)
 
 def reweighted_training(criterion, optimizer, scheduler):
-    original_model_name = "./model/cifar10_vgg16_avg_acc_63.825_sgd.pt"
+    original_model_name = "./model_retrained2/cifar10_vgg16_avg_acc_60.515_sgd.pt"
     print("\n>_ Loading baseline/progressive model..... {}\n".format(original_model_name))
     model.load_state_dict(torch.load(original_model_name))  # need basline model
 
@@ -743,7 +743,7 @@ def train(train_loader, criterion, optimizer, scheduler, epoch, args, layers, re
                 elif args.sparsity_type == "kernel":
                     l1_loss = l1_loss + 1e-5 * torch.sum(rew * torch.norm(conv_layer, dim=[2, 3]))
                 elif args.sparsity_type == "filter":
-                    l1_loss = l1_loss + 12e-4 * torch.sum(rew * torch.norm(torch.norm(conv_layer, dim=1), dim=[1, 2]))
+                    l1_loss = l1_loss + 8e-4 * torch.sum(rew * torch.norm(torch.norm(conv_layer, dim=1), dim=[1, 2]))
 
 
             ce_loss = l1_loss + ce_loss
