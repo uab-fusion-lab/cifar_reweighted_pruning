@@ -6,7 +6,7 @@ python -u adv_main.py --arch vgg \
 					   --masked-retrain \
 					   --no-tricks \
 					   --sparsity-type filter \
-					   --epoch 300 \
+					   --epoch 600 \
 					   --optmzr sgd \
 					   --lr 0.1 \
 					   --adv \
