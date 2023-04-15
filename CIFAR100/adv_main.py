@@ -415,7 +415,7 @@ def test_sparsity(model, column=True, channel=True, filter=True):
 
 def check_model(criterion):
     print("checking model.....")
-    original_model_name = "./model_reweighted/rew_epoch_vgg_50.pt"
+    original_model_name = "./model/cifar10_resnet18_avg_acc_66.005_sgd.pt"
     model.load_state_dict(torch.load(original_model_name))
     print(model)
     print("\n------------------------------\n")
