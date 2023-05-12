@@ -66,6 +66,8 @@ parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                     help='how many batches to wait before logging training status')
 parser.add_argument('--masked-retrain', action='store_true', default=False,
                     help='for masked retrain')
+parser.add_argument('--pre-train', action='store_true', default=False,
+                    help='for pre train')
 parser.add_argument('--verbose', action='store_true', default=True,
                     help='whether to report rew convergence condition')
 parser.add_argument('--rew', action='store_true', default=False,
@@ -161,10 +163,10 @@ transform_test = transforms.Compose([
     transforms.ToTensor()
 ])
 
-trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
+trainset = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=0)
 
-testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
+testset = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=0)
 
 # set up adv model
@@ -270,7 +272,7 @@ def main():
 
     elif args.lr_scheduler == 'default':
         # my learning rate scheduler for cifar, following https://github.com/kuangliu/pytorch-cifar
-        epoch_milestones = [80,150]
+        epoch_milestones = [50,100,150]
 
         """Set the learning rate of each parameter group to the initial lr decayed
             by gamma once the number of epoch reaches one of the milestones
@@ -299,6 +301,9 @@ def main():
 
     if args.check_model:
         check_model(criterion)
+
+    if args.pre_train:
+        pre_train(criterion, optimizer, scheduler)
 
 def test_sparsity(model, column=True, channel=True, filter=True):
 
@@ -415,7 +420,7 @@ def test_sparsity(model, column=True, channel=True, filter=True):
 
 def check_model(criterion):
     print("checking model.....")
-    original_model_name = "./model/cifar10_resnet18_avg_acc_66.005_sgd.pt"
+    original_model_name = "./model/cifar10_resnet18_avg_acc_40.145_sgd.pt"
     model.load_state_dict(torch.load(original_model_name))
     print(model)
     print("\n------------------------------\n")
@@ -431,8 +436,26 @@ def check_model(criterion):
     #     if (name == 'basic_model.layer1.0.conv1.weight'):
     #         print(W.data)
 
+def pre_train(criterion, optimizer, scheduler):
+    all_nat_acc = [0.000]
+    for epoch in range(1, args.epochs + 1):
+        idx_loss_dict = train(train_loader, criterion, optimizer, scheduler, epoch, args, layers=None, rew_layers=None,
+                              eps=None)
+        nat_acc, adv_acc = test(model, criterion, test_loader)
+
+        if nat_acc > max(all_nat_acc):
+            print("\n>_ Got better accuracy, saving model with accuracy {:.3f}% now...\n".format(nat_acc))
+            torch.save(model.state_dict(),
+                       "./model/cifar10_{}{}_avg_acc_{:.3f}_{}.pt".format(args.arch, args.depth, nat_acc,
+                                                                                     args.optmzr))
+            print("\n>_ Deleting previous model file with accuracy {:.3f}% now...\n".format(max(all_nat_acc)))
+            if len(all_nat_acc) > 1:
+                os.remove("./model/cifar10_{}{}_avg_acc_{:.3f}_{}.pt".format(args.arch, args.depth,
+                                                                                        max(all_nat_acc), args.optmzr))
+        all_nat_acc.append(nat_acc)
+
 def reweighted_training(criterion, optimizer, scheduler):
-    original_model_name = "./model_retrained2/cifar10_vgg16_avg_acc_60.945_sgd.pt"
+    original_model_name = "./model/cifar10_resnet18_avg_acc_40.145_sgd.pt"
     print("\n>_ Loading baseline/progressive model..... {}\n".format(original_model_name))
     model.load_state_dict(torch.load(original_model_name))  # need basline model
 
@@ -512,7 +535,7 @@ def masked_retrain(criterion, optimizer, scheduler):
     model.load_state_dict(torch.load("./model_reweighted/rew_epoch_vgg_50.pt"))
     model.cuda()
 
-    model_record_name = "./model_retrained2/cifar10_vgg16_avg_acc_60.515_sgd.pt"
+    model_record_name = "./model_reweighted/rew_epoch_vgg_50.pt"
 
     model_record.load_state_dict(torch.load(model_record_name))
 

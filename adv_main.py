@@ -425,7 +425,7 @@ def check_model(criterion):
     print("\n------------------------------\n")
     test(model, criterion, test_loader)
     #
-    test_sparsity(model)
+    # test_sparsity(model)
     #
     # for name, W in (model.named_parameters()):
     #     if (name == 'basic_model.layer1.0.conv1.weight'):
@@ -835,6 +835,7 @@ def test(model, criterion, test_loader):
     with torch.no_grad():
         end = time.time()
         for i, (data, target) in enumerate(test_loader):
+            print(target)
             data, target = data.cuda(), target.cuda()
             nat_output,adv_output,pert_inputs = model(data, target)
             nat_loss = criterion(nat_output, target)
