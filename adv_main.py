@@ -270,7 +270,7 @@ def main():
 
     elif args.lr_scheduler == 'default':
         # my learning rate scheduler for cifar, following https://github.com/kuangliu/pytorch-cifar
-        epoch_milestones = [200,400]
+        epoch_milestones = [100,200,300]
 
         """Set the learning rate of each parameter group to the initial lr decayed
             by gamma once the number of epoch reaches one of the milestones
@@ -415,9 +415,9 @@ def test_sparsity(model, column=True, channel=True, filter=True):
 
 def check_model(criterion):
     print("checking model.....")
-    original_model_name = "./model_retrained2/cifar10_vgg16_avg_acc_57.905_sgd.pt"
+    original_model_name = "./model_retrained2/cifar10_vgg16_avg_acc_52.615_sgd.pt"
     model.load_state_dict(torch.load(original_model_name))
-    print(model)
+    # print(model)
     print("\n------------------------------\n")
     # for name, weight in model.named_parameters():
     #     if (len(weight.size()) == 4):
@@ -425,14 +425,14 @@ def check_model(criterion):
     print("\n------------------------------\n")
     test(model, criterion, test_loader)
     #
-    # test_sparsity(model)
+    test_sparsity(model)
     #
     # for name, W in (model.named_parameters()):
     #     if (name == 'basic_model.layer1.0.conv1.weight'):
     #         print(W.data)
 
 def reweighted_training(criterion, optimizer, scheduler):
-    original_model_name = "./model/cifar10_vgg16_avg_acc_63.825_sgd.pt"
+    original_model_name = "./model_retrained2/cifar10_vgg16_avg_acc_57.905_sgd.pt"
     print("\n>_ Loading baseline/progressive model..... {}\n".format(original_model_name))
     model.load_state_dict(torch.load(original_model_name))  # need basline model
 
@@ -509,10 +509,10 @@ def reweighted_training(criterion, optimizer, scheduler):
 
 def masked_retrain(criterion, optimizer, scheduler):
     print("\n>_ Loading file...")
-    model.load_state_dict(torch.load("./model_reweighted/rew_epoch_vgg_50_2.pt"))
+    model.load_state_dict(torch.load("./model_reweighted/rew_epoch_vgg_50.pt"))
     model.cuda()
 
-    model_record_name = "./model_retrained2/cifar10_vgg16_avg_acc_60.945_sgd.pt"
+    model_record_name = "./model_retrained2/cifar10_vgg16_avg_acc_57.905_sgd.pt"
 
     model_record.load_state_dict(torch.load(model_record_name))
 
@@ -618,7 +618,7 @@ def masked_retrain(criterion, optimizer, scheduler):
     print("Best avg accuracy: " + str(max(all_nat_acc)))
     print("Best adv accuracy: " + str(max(all_adv_acc)))
 
-re = 1e-4
+re = 4e-4
 
 
 def train(train_loader, criterion, optimizer, scheduler, epoch, args, layers, rew_layers, eps):
@@ -743,7 +743,7 @@ def train(train_loader, criterion, optimizer, scheduler, epoch, args, layers, re
                 elif args.sparsity_type == "kernel":
                     l1_loss = l1_loss + 1e-5 * torch.sum(rew * torch.norm(conv_layer, dim=[2, 3]))
                 elif args.sparsity_type == "filter":
-                    l1_loss = l1_loss + 12e-4 * torch.sum(rew * torch.norm(torch.norm(conv_layer, dim=1), dim=[1, 2]))
+                    l1_loss = l1_loss + 1e-4 * torch.sum(rew * torch.norm(torch.norm(conv_layer, dim=1), dim=[1, 2]))
 
 
             ce_loss = l1_loss + ce_loss
@@ -835,7 +835,6 @@ def test(model, criterion, test_loader):
     with torch.no_grad():
         end = time.time()
         for i, (data, target) in enumerate(test_loader):
-            print(target)
             data, target = data.cuda(), target.cuda()
             nat_output,adv_output,pert_inputs = model(data, target)
             nat_loss = criterion(nat_output, target)

@@ -1,8 +1,8 @@
 export CUDA_VISIBLE_DEVICES="0"
 
-python -u adv_main.py --arch resnet \
+python -u adv_main.py --arch vgg \
              --pre-train \
-					   --depth 18 \
+					   --depth 16 \
 					   --batch-size 256 \
 					   --epoch 400 \
 					   --optmzr sgd \
